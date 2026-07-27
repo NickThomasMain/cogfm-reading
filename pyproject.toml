@@ -1,0 +1,40 @@
+[project]
+name = "cogfm-reading"
+version = "0.1.0"
+description = "Cognitive Foundation Model for Reading — binding EEG / eye-tracking / fMRI to a language-anchored space."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Daniel Helm" }]
+
+# Runtime dependencies (the coarse "shopping list"; exact versions are pinned in uv.lock)
+dependencies = [
+    "numpy>=1.26",
+    "hydra-core>=1.3",
+    "torch>=2.2",
+    "transformers>=4.40",
+]
+
+# Development-only tools; installed by `uv sync`, excluded from the shipped package.
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+
+# This project is an application, not a library to be built/published.
+# Keep it non-packaged for now; flip to an installable package once real modules exist.
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# E/F = pyflakes+pycodestyle, I = import sorting, UP = pyupgrade, B = bugbear
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
