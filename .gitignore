@@ -1,8 +1,9 @@
 # === Data, features, model artifacts (NEVER commit — large / reproducible) ===
-data/
-raw/
-datasets/
-features/cache/
+# Anchored to repo root so they don't match source dirs like src/cogfm/data/
+/data/
+/raw/
+/datasets/
+src/cogfm/features/cache/
 *.npy
 *.npz
 *.parquet
@@ -21,8 +22,8 @@ features/cache/
 *.pth
 *.ckpt
 *.safetensors
-checkpoints/
-outputs/
+/checkpoints/
+/outputs/
 lightning_logs/
 
 # === Experiment tracking ===
