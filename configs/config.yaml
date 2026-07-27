@@ -6,7 +6,9 @@
 #
 defaults:
   - encoder: scanpath     # -> configs/encoder/scanpath.yaml
-  - loss: siglip          # -> configs/loss/siglip.yaml
+  - connector: mlp        # -> configs/connector/mlp.yaml
+  - anchor: standin       # -> configs/anchor/standin.yaml
+  - loss: infonce         # -> configs/loss/infonce.yaml (siglip added later)
   - _self_                # values in THIS file override the groups above
 
 experiment_name: smoke

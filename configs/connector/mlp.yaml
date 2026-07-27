@@ -1,0 +1,5 @@
+# Two-layer MLP connector. in_dim/out_dim are wired at build time
+# (from encoder embed_dim and anchor dim), so only architecture params live here.
+name: mlp
+hidden_dim: 256
+dropout: 0.0

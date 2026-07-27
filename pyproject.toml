@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "cogfm-reading"
 version = "0.1.0"
@@ -22,10 +26,10 @@ dev = [
     "ruff>=0.5",
 ]
 
-# This project is an application, not a library to be built/published.
-# Keep it non-packaged for now; flip to an installable package once real modules exist.
-[tool.uv]
-package = false
+# Build the importable package from the src/ layout, so `import cogfm` works
+# everywhere. `uv sync` installs it in editable mode.
+[tool.hatch.build.targets.wheel]
+packages = ["src/cogfm"]
 
 [tool.ruff]
 line-length = 100

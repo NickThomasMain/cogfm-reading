@@ -1,0 +1,4 @@
+# Stand-in anchor for the smoke run (replaced by a frozen Qwen3 anchor later).
+name: standin
+dim: 128
+vocab_size: 16384
