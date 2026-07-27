@@ -9,7 +9,7 @@ def test_same_seed_gives_identical_samples():
     a = make_dummy_samples(8, seed=42)
     b = make_dummy_samples(8, seed=42)
     assert len(a) == len(b) == 8
-    for sa, sb in zip(a, b):
+    for sa, sb in zip(a, b, strict=True):
         assert sa.text == sb.text
         assert np.array_equal(sa.scanpath, sb.scanpath)
 
@@ -17,7 +17,9 @@ def test_same_seed_gives_identical_samples():
 def test_different_seed_differs():
     a = make_dummy_samples(8, seed=1)
     b = make_dummy_samples(8, seed=2)
-    assert any(not np.array_equal(sa.scanpath, sb.scanpath) for sa, sb in zip(a, b))
+    assert any(
+        not np.array_equal(sa.scanpath, sb.scanpath) for sa, sb in zip(a, b, strict=True)
+    )
 
 
 def test_scanpath_shape_and_dtype():
