@@ -24,6 +24,7 @@ src/cogfm/features/cache/
 *.safetensors
 /checkpoints/
 /outputs/
+/multirun/
 lightning_logs/
 
 # === Experiment tracking ===

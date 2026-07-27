@@ -1,0 +1,21 @@
+# Main experiment config. Hydra composes this from the building blocks below.
+#
+# The `defaults` list picks one file from each group directory. Override any of
+# them on the command line, e.g.:
+#   uv run python scripts/print_config.py encoder=labram loss=infonce
+#
+defaults:
+  - encoder: scanpath     # -> configs/encoder/scanpath.yaml
+  - loss: siglip          # -> configs/loss/siglip.yaml
+  - _self_                # values in THIS file override the groups above
+
+experiment_name: smoke
+seed: 42
+
+optimizer:
+  lr: 0.001
+  weight_decay: 0.0
+
+training:
+  max_steps: 10
+  batch_size: 8

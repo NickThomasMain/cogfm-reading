@@ -1,0 +1,3 @@
+# InfoNCE contrastive loss (placeholder config).
+name: infonce
+temperature: 0.07

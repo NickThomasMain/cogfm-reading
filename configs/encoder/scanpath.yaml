@@ -1,0 +1,4 @@
+# Eye-tracking scanpath encoder (placeholder — no real model yet).
+name: scanpath
+modality: eye_tracking
+embed_dim: 128

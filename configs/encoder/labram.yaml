@@ -1,0 +1,4 @@
+# EEG encoder (LaBraM, placeholder — no real model yet).
+name: labram
+modality: eeg
+embed_dim: 200

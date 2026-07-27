@@ -1,0 +1,4 @@
+# SigLIP-style sigmoid contrastive loss (placeholder config).
+name: siglip
+temperature: 0.07
+learnable_bias: true
