@@ -1,0 +1,63 @@
+# === Data, features, model artifacts (NEVER commit — large / reproducible) ===
+data/
+raw/
+datasets/
+features/cache/
+*.npy
+*.npz
+*.parquet
+*.lmdb
+*.h5
+*.hdf5
+*.nii
+*.nii.gz
+*.edf
+*.set
+*.fif
+*.bdf
+
+# Model checkpoints / weights
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+checkpoints/
+outputs/
+lightning_logs/
+
+# === Experiment tracking ===
+wandb/
+mlruns/
+mlflow.db
+
+# === DVC (keep .dvc pointer files, ignore the cache) ===
+/.dvc/cache
+/.dvc/tmp
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# === Environments ===
+.venv/
+venv/
+env/
+.python-version
+
+# === OS / editor ===
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# === Secrets ===
+.env
+*.key
