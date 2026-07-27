@@ -1,10 +1,10 @@
-"""Tiny stand-in anchor for the M0 smoke run.
+"""Lightweight placeholder anchor.
 
 NOT a language model — it splits text into words, maps each word to a stable id
-via a content hash, looks up an embedding, and mean-pools per sample. This
-mimics the real anchor's interface (text in, one pooled vector per sample out),
-so the frozen Qwen3 anchor can later drop in behind the same class without
-changing the rest of the pipeline.
+via a content hash, looks up an embedding, and mean-pools per sample. This mimics
+the anchor interface (text in, one pooled vector per sample out), so a frozen LLM
+anchor (e.g. Qwen3) can drop in behind the same class without changing the rest
+of the pipeline.
 
 The hash is content-based (hashlib), so it is stable across processes — unlike
 Python's built-in hash(), which is randomised per run.

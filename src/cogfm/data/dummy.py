@@ -1,12 +1,12 @@
-"""Deterministic synthetic reading data for the M0 smoke run.
+"""Deterministic synthetic reading data for end-to-end testing.
 
-Produces samples shaped the way our canonical schema *will* look — text plus an
-eye-tracking scanpath plus metadata — so the pipeline can flow end-to-end before
-any real dataset adapters exist (those arrive in M1).
+Produces samples shaped the way the canonical schema is expected to look — text
+plus an eye-tracking scanpath plus metadata — so the pipeline can run end-to-end
+before real dataset adapters exist.
 
-The real per-dataset formats have not been inspected yet; the scanpath shape
-here — a sequence of fixations, each carrying (x, y, duration) — is a documented
-assumption consistent with a scanpath-only ET encoder.
+The scanpath shape here — a sequence of fixations, each carrying (x, y,
+duration) — is a deliberate simplifying assumption consistent with a
+scanpath-only eye-tracking encoder.
 """
 
 from __future__ import annotations
@@ -19,9 +19,26 @@ from torch.utils.data import Dataset
 
 # A tiny fake vocabulary — meaningless words, only to have text-like tokens.
 _FAKE_VOCAB = [
-    "lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing",
-    "elit", "sed", "eiusmod", "tempor", "incididunt", "labore", "magna",
-    "aliqua", "veniam", "nostrud", "ullamco", "laboris", "aliquip",
+    "lorem",
+    "ipsum",
+    "dolor",
+    "sit",
+    "amet",
+    "consectetur",
+    "adipiscing",
+    "elit",
+    "sed",
+    "eiusmod",
+    "tempor",
+    "incididunt",
+    "labore",
+    "magna",
+    "aliqua",
+    "veniam",
+    "nostrud",
+    "ullamco",
+    "laboris",
+    "aliquip",
 ]
 
 # Each fixation carries these three features, in this order.
@@ -35,8 +52,8 @@ class DummySample:
     sample_id: int
     subject_id: str
     dataset_id: str
-    text: list[str]          # sequence of (fake) words
-    scanpath: np.ndarray     # shape (n_fixations, 3): x, y, duration; float32
+    text: list[str]  # sequence of (fake) words
+    scanpath: np.ndarray  # shape (n_fixations, 3): x, y, duration; float32
 
 
 def make_dummy_samples(
@@ -53,7 +70,7 @@ def make_dummy_samples(
 
     Same seed -> identical samples. Each sample gets a text of random length and
     a scanpath with a FIXED number of fixations (equal length across samples, so
-    batching needs no padding for M0). Each fixation carries (x, y, duration).
+    batching needs no padding). Each fixation carries (x, y, duration).
     """
     rng = np.random.default_rng(seed)
     samples: list[DummySample] = []
@@ -63,9 +80,9 @@ def make_dummy_samples(
         text = [_FAKE_VOCAB[j] for j in word_idx]
 
         # fixed number of fixations per sample -> equal length, no padding needed
-        x = rng.uniform(0.0, 1.0, size=n_fixations)          # normalised screen x
-        y = rng.uniform(0.0, 1.0, size=n_fixations)          # normalised screen y
-        duration = rng.uniform(0.1, 0.4, size=n_fixations)   # seconds
+        x = rng.uniform(0.0, 1.0, size=n_fixations)  # normalised screen x
+        y = rng.uniform(0.0, 1.0, size=n_fixations)  # normalised screen y
+        duration = rng.uniform(0.1, 0.4, size=n_fixations)  # seconds
         scanpath = np.stack([x, y, duration], axis=1).astype(np.float32)
 
         subject_id = f"S{int(rng.integers(0, n_subjects)):02d}"
@@ -85,8 +102,8 @@ class DummyReadingDataset(Dataset):
     """Torch Dataset over synthetic samples, for the smoke-run DataLoader.
 
     __getitem__ returns a dict; the scanpath is a float32 tensor of shape
-    (n_fixations, 3). Variable-length scanpaths are padded later, in the
-    training loop's collate step.
+    (n_fixations, 3). All samples share the same number of fixations, so batching
+    stacks them without padding.
     """
 
     def __init__(self, n_samples: int = 64, *, seed: int = 42, **kwargs) -> None:

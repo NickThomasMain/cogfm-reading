@@ -8,11 +8,15 @@ defaults:
   - encoder: scanpath     # -> configs/encoder/scanpath.yaml
   - connector: mlp        # -> configs/connector/mlp.yaml
   - anchor: standin       # -> configs/anchor/standin.yaml
-  - loss: infonce         # -> configs/loss/infonce.yaml (siglip added later)
+  - loss: infonce         # -> configs/loss/infonce.yaml
   - _self_                # values in THIS file override the groups above
 
 experiment_name: smoke
 seed: 42
+
+data:
+  n_samples: 64
+  n_fixations: 10
 
 optimizer:
   lr: 0.001

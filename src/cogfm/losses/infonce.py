@@ -29,7 +29,7 @@ class InfoNCELoss(BindingLoss):
         logits = (m @ a.t()) / self.temperature  # (B, B) cosine similarities / T
         targets = torch.arange(logits.size(0), device=logits.device)
         loss = 0.5 * (
-            F.cross_entropy(logits, targets)      # modality -> text
+            F.cross_entropy(logits, targets)  # modality -> text
             + F.cross_entropy(logits.t(), targets)  # text -> modality
         )
         return loss, logits

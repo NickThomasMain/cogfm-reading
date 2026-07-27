@@ -1,8 +1,8 @@
 """Combine individual reading samples into one batch.
 
-Simplifying assumption for M0: every scanpath has the same number of fixations,
-so the scanpaths can be stacked directly with no padding. (Variable lengths and
-padding return with real data in M1.)
+Simplifying assumption: every scanpath has the same number of fixations, so the
+scanpaths can be stacked directly with no padding. Variable-length scanpaths
+would require padding and a mask.
 """
 
 from __future__ import annotations

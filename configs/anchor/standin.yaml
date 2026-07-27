@@ -1,4 +1,5 @@
-# Stand-in anchor for the smoke run (replaced by a frozen Qwen3 anchor later).
+# Lightweight placeholder anchor. A frozen LLM anchor (e.g. Qwen3) can replace it
+# behind the same interface.
 name: standin
 dim: 128
 vocab_size: 16384

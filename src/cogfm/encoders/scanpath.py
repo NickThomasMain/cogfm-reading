@@ -1,8 +1,8 @@
 """Placeholder eye-tracking scanpath encoder.
 
-Random-initialised, NOT a real model — its only job is to give the M0 pipeline a
-correctly shaped modality embedding. Later this is replaced by a real,
-pretrained, frozen scanpath encoder (e.g. ScanEZ) behind the same interface.
+Random-initialised, NOT a real model — its only job is to give the pipeline a
+correctly shaped modality embedding. It can be replaced by a real, pretrained,
+frozen scanpath encoder (e.g. ScanEZ) behind the same interface.
 
 It projects each fixation's (x, y, duration) to embed_dim and mean-pools over the
 (unpadded) fixations.

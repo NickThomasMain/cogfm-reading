@@ -3,8 +3,8 @@
 This is the bridge between a Hydra config value (e.g. ``encoder: scanpath``) and
 the actual class that gets built. Components register themselves with a
 decorator; the rest of the code builds them by name. Adding a component costs
-one decorator line, no central if/elif chain — the structural answer to the
-ablation-heavy (OFAT) methodology.
+one decorator line, with no central if/elif chain — which keeps swapping
+components for ablations cheap.
 """
 
 from __future__ import annotations
@@ -35,9 +35,7 @@ class Registry:
     def build(self, name: str, **kwargs):
         """Look up ``name`` and instantiate it with ``kwargs``."""
         if name not in self._entries:
-            raise KeyError(
-                f"unknown {self.kind} '{name}'. Registered: {self.available()}"
-            )
+            raise KeyError(f"unknown {self.kind} '{name}'. Registered: {self.available()}")
         return self._entries[name](**kwargs)
 
     def available(self) -> list[str]:
