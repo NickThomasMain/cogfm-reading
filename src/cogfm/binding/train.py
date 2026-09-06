@@ -1,9 +1,14 @@
 """Binding training loop and an end-to-end pipeline check.
 
-``run_pipeline_check`` builds every component from the config, runs a few
-training steps on the synthetic data, and reports the final loss plus
-retrieval@k. Its job is to prove the pipeline flows end-to-end and produces a
-reproducible number, not to reach any particular quality.
+``run_pipeline_check`` builds every component from the config, trains the
+connector for a few steps and reports the final loss plus retrieval@k. Its job
+is to prove that the pipeline flows end to end and produces a reproducible
+number, not to reach any particular quality.
+
+The reported retrieval is measured inside a single batch, so its chance level
+is one over the batch size and it says nothing about binding quality. A real
+measurement needs a fixed, length-matched candidate pool and a permutation
+null, neither of which lives here.
 """
 
 from __future__ import annotations
@@ -13,7 +18,7 @@ from itertools import cycle
 
 import torch
 from omegaconf import DictConfig
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset, Subset
 
 # importing these packages registers the built-in components
 import cogfm.anchor  # noqa: F401
@@ -21,8 +26,10 @@ import cogfm.connectors  # noqa: F401
 import cogfm.encoders  # noqa: F401
 import cogfm.losses  # noqa: F401
 from cogfm.binding.model import BindingModel
+from cogfm.data.adapters.zuco import ZuCoReadingDataset
 from cogfm.data.batching import batch_reading_samples
 from cogfm.data.dummy import DummyReadingDataset
+from cogfm.data.splits import make_folds, untested
 from cogfm.eval.retrieval import retrieval_at_k
 from cogfm.registry import ANCHORS, CONNECTORS, ENCODERS, LOSSES
 from cogfm.seed import set_seed
@@ -43,17 +50,68 @@ def _build_model(cfg: DictConfig) -> BindingModel:
     return BindingModel(encoder, connector, anchor)
 
 
-def _evaluate(model: BindingModel, loss_fn, dataset, batch_size: int) -> dict:
+def _build_datasets(cfg: DictConfig) -> tuple[Dataset, Dataset]:
+    """Return the training and evaluation datasets named by the config.
+
+    Synthetic data has no split and serves both roles. ZuCo is divided into
+    subject- and item-disjoint folds; the configured fold becomes the test
+    split and the rest of the grid becomes training. Trials that overlap the
+    test split on exactly one axis belong to neither and are left out.
+    """
+    name = cfg.data.name
+    if name == "dummy":
+        dataset = DummyReadingDataset(
+            cfg.data.n_samples, seed=cfg.seed, n_fixations=cfg.data.n_fixations
+        )
+        log.info("dummy data: %d samples, %d fixations each", len(dataset), cfg.data.n_fixations)
+        return dataset, dataset
+
+    if name == "zuco":
+        dataset = ZuCoReadingDataset(root=cfg.data.root, task=cfg.data.task)
+        folds = make_folds(
+            dataset.subject_ids,
+            dataset.sentence_ids,
+            dataset.sentences,
+            n_folds=cfg.data.n_folds,
+            seed=cfg.data.split_seed,
+        )
+        if not 0 <= cfg.data.fold < len(folds):
+            raise ValueError(f"fold {cfg.data.fold} outside 0..{len(folds) - 1}")
+        fold = folds[cfg.data.fold]
+        dropped = len(dataset) - len(fold.train) - len(fold.test)
+        log.info(
+            "zuco fold %d of %d: %d train, %d test, %d dropped (%d trials, %d sentences total)",
+            fold.index,
+            len(folds),
+            len(fold.train),
+            len(fold.test),
+            dropped,
+            len(dataset),
+            len(dataset.sentences),
+        )
+        log.info("test subjects: %s", ", ".join(fold.test_subjects))
+        never = untested(folds, dataset.sentence_ids)
+        if len(never):
+            log.info("sentences no fold tests: %d", len(never))
+        return Subset(dataset, fold.train.tolist()), Subset(dataset, fold.test.tolist())
+
+    raise ValueError(f"unknown dataset '{name}'; expected 'dummy' or 'zuco'")
+
+
+def _evaluate(model: BindingModel, loss_fn, dataset: Dataset, batch_size: int) -> dict:
+    """Retrieval inside one batch drawn from the evaluation split."""
     model.eval()
     n = min(batch_size, len(dataset))
     batch = batch_reading_samples([dataset[i] for i in range(n)])
     with torch.no_grad():
-        modality = model.encode_modality(batch["scanpath"])
+        modality = model.encode_modality(batch["scanpath"], batch["mask"])
         text = model.encode_text(batch["text"])
         _, logits = loss_fn(modality, text)
     return {
         "retrieval@1": retrieval_at_k(logits, k=1),
         "retrieval@5": retrieval_at_k(logits, k=5),
+        "chance@1": 1.0 / n,
+        "eval_batch": n,
     }
 
 
@@ -72,24 +130,23 @@ def run_pipeline_check(cfg: DictConfig) -> dict:
         weight_decay=cfg.optimizer.weight_decay,
     )
 
-    dataset = DummyReadingDataset(
-        cfg.data.n_samples, seed=cfg.seed, n_fixations=cfg.data.n_fixations
-    )
+    train_set, eval_set = _build_datasets(cfg)
     generator = torch.Generator().manual_seed(cfg.seed)
     loader = DataLoader(
-        dataset,
+        train_set,
         batch_size=cfg.training.batch_size,
         shuffle=True,
         collate_fn=batch_reading_samples,
         generator=generator,
+        drop_last=len(train_set) > cfg.training.batch_size,
     )
 
     model.train()
     batches = cycle(loader)
-    final_loss = float("nan")
+    first_loss = final_loss = float("nan")
     for step in range(1, cfg.training.max_steps + 1):
         batch = next(batches)
-        modality = model.encode_modality(batch["scanpath"])
+        modality = model.encode_modality(batch["scanpath"], batch["mask"])
         text = model.encode_text(batch["text"])
         loss, _ = loss_fn(modality, text)
 
@@ -98,15 +155,20 @@ def run_pipeline_check(cfg: DictConfig) -> dict:
         optimizer.step()
 
         final_loss = loss.item()
+        if step == 1:
+            first_loss = final_loss
         log.info("step %d/%d  loss=%.4f", step, cfg.training.max_steps, final_loss)
 
-    metrics = _evaluate(model, loss_fn, dataset, cfg.training.batch_size)
+    metrics = _evaluate(model, loss_fn, eval_set, cfg.training.batch_size)
+    metrics["first_loss"] = first_loss
     metrics["final_loss"] = final_loss
     metrics["steps"] = cfg.training.max_steps
     log.info(
-        "pipeline check done: loss=%.4f  R@1=%.3f  R@5=%.3f",
+        "pipeline check done: loss %.4f -> %.4f  R@1=%.3f (chance %.3f)  R@5=%.3f",
+        metrics["first_loss"],
         metrics["final_loss"],
         metrics["retrieval@1"],
+        metrics["chance@1"],
         metrics["retrieval@5"],
     )
     return metrics

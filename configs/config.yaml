@@ -2,9 +2,10 @@
 #
 # The `defaults` list picks one file from each group directory. Override any of
 # them on the command line, e.g.:
-#   uv run python scripts/print_config.py encoder=labram loss=infonce
+#   uv run python scripts/print_config.py data=zuco connector=linear
 #
 defaults:
+  - data: dummy           # -> configs/data/dummy.yaml
   - encoder: scanpath     # -> configs/encoder/scanpath.yaml
   - connector: mlp        # -> configs/connector/mlp.yaml
   - anchor: standin       # -> configs/anchor/standin.yaml
@@ -13,10 +14,6 @@ defaults:
 
 experiment_name: smoke
 seed: 42
-
-data:
-  n_samples: 64
-  n_fixations: 10
 
 optimizer:
   lr: 0.001
