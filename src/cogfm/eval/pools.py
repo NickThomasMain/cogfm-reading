@@ -156,3 +156,94 @@ def describe_pools(
             f"{skipped.max()} Wörter, Median {np.median(skipped):.0f}"
         )
     return "\n".join(lines)
+
+
+def surface_features(sentences: list[dict], eligible: np.ndarray) -> np.ndarray:
+    """Properties a reader can exploit without understanding the text.
+
+    Word count and mean word length in characters. Length drives how many
+    fixations a scanpath contains; word length stands in for how common the
+    words are, since frequent words are short ones. Both are visible in the
+    gaze signal and say nothing about meaning.
+
+    Returns an (n_eligible, 2) array in the order of ``eligible``. Callers that
+    have proper frequency estimates can append them as further columns and pass
+    the result to ``build_decoy_pools``.
+    """
+    text_of = {int(s["id"]): str(s["text"]) for s in sentences}
+    rows = []
+    for sentence_id in eligible:
+        words = text_of[int(sentence_id)].split()
+        mean_length = float(np.mean([len(w) for w in words])) if words else 0.0
+        rows.append([float(len(words)), mean_length])
+    return np.array(rows, dtype=float)
+
+
+def build_decoy_pools(
+    sentences: list[dict],
+    eligible: np.ndarray,
+    features: np.ndarray | None = None,
+    seed: int = 0,
+) -> list[CandidatePool]:
+    """Pair every sentence with the one it is hardest to tell apart from.
+
+    The two-alternative test. Where a pool of twenty-five can only control word
+    count, a pool of two can be matched on several surface properties at once,
+    because one close partner exists for almost any sentence while twenty-four
+    do not. Chance is one half, so anything reliably above it distinguishes two
+    texts that agree on everything a scanpath makes obvious.
+
+    The partner is the nearest neighbour in standardised feature space, so no
+    single feature dominates through its units. A sentence may serve as the
+    decoy for several others.
+
+    Args:
+        sentences: sentence records carrying ``id``, ``text`` and ``n_words``.
+        eligible: sentence ids to draw from, normally one fold's test set.
+        features: (n_eligible, k) properties to match on; word count and mean
+            word length when None.
+        seed: decides which of the two slots holds the target.
+
+    Returns:
+        One two-candidate pool per eligible sentence.
+
+    Raises:
+        ValueError: with fewer than two eligible sentences, or when the feature
+            rows do not line up with them.
+    """
+    eligible = np.asarray(eligible)
+    if len(eligible) < 2:
+        raise ValueError(f"a two-alternative pool needs at least 2 sentences, got {len(eligible)}")
+
+    if features is None:
+        features = surface_features(sentences, eligible)
+    features = np.asarray(features, dtype=float)
+    if len(features) != len(eligible):
+        raise ValueError(f"{len(features)} feature rows for {len(eligible)} sentences")
+
+    spread = features.std(axis=0)
+    spread[spread == 0] = 1.0
+    scaled = (features - features.mean(axis=0)) / spread
+
+    distance = np.linalg.norm(scaled[:, None, :] - scaled[None, :, :], axis=-1)
+    np.fill_diagonal(distance, np.inf)
+    partners = distance.argmin(axis=1)
+
+    rng = np.random.default_rng(seed)
+    pools = []
+    for position, sentence_id in enumerate(eligible):
+        target_first = bool(rng.integers(0, 2))
+        partner_id = eligible[partners[position]]
+        candidates = (
+            np.array([sentence_id, partner_id])
+            if target_first
+            else np.array([partner_id, sentence_id])
+        )
+        pools.append(
+            CandidatePool(
+                sentence_id=int(sentence_id),
+                candidates=candidates,
+                target_position=0 if target_first else 1,
+            )
+        )
+    return pools

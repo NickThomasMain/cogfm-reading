@@ -1,0 +1,13 @@
+# Transformer over the fixation sequence. With checkpoint left empty the weights
+# stay at their random initialisation, which is the control condition; pointing
+# it at a file makes this the pretrained encoder.
+name: scanez
+modality: eye_tracking
+embed_dim: 128
+n_features: 3
+n_layers: 4
+n_heads: 4
+feedforward_dim: 256
+dropout: 0.0
+max_length: 512
+checkpoint: null

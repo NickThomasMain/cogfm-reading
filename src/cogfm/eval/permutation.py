@@ -15,6 +15,12 @@ shuffles reaching the observed value is the p-value.
 Only the row index is permuted. Pools, their length matching and the position
 of each target stay exactly as they were, so nothing about the design changes
 between the observed run and the null.
+
+Shuffling can be restricted to groups. Across all queries a signal might come
+from the reader rather than the text, since a slow reader produces long
+scanpaths and long scanpaths suit long texts. Shuffling only within one
+subject's own trials holds the reader fixed and swaps only which text is asked
+for, so whatever survives has to come from the text.
 """
 
 from __future__ import annotations
@@ -93,6 +99,29 @@ def gather_scores(
     return similarity[np.asarray(rows)[:, None], columns]
 
 
+def grouped_permutation(groups: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+    """Shuffle positions within each group and leave the groups in place.
+
+    Queries alone in their group map to themselves, which counts as a correct
+    pairing and lifts the null. ``singleton_share`` reports how much of the
+    sample that affects.
+    """
+    order = np.arange(len(groups))
+    for name in np.unique(groups):
+        members = np.flatnonzero(groups == name)
+        order[members] = rng.permutation(members)
+    return order
+
+
+def singleton_share(groups: np.ndarray) -> float:
+    """Fraction of queries whose group holds only them."""
+    if not len(groups):
+        return 0.0
+    names, counts = np.unique(groups, return_counts=True)
+    alone = names[counts == 1]
+    return float(np.isin(groups, alone).mean())
+
+
 def permutation_null(
     similarity: np.ndarray,
     columns: np.ndarray,
@@ -101,6 +130,7 @@ def permutation_null(
     name: str = "statistic",
     n_permutations: int = DEFAULT_PERMUTATIONS,
     seed: int = 0,
+    groups: np.ndarray | None = None,
 ) -> PermutationResult:
     """Compare an observed statistic against shuffled signal-to-pool assignments.
 
@@ -113,6 +143,8 @@ def permutation_null(
         n_permutations: shuffles to draw; below a few hundred the p-value is
             too coarse to support a claim.
         seed: controls the shuffles.
+        groups: label per query confining the shuffle, normally the subject.
+            Free shuffling when None.
 
     Returns:
         The observed value, the null it is held against, and a p-value computed
@@ -133,11 +165,18 @@ def permutation_null(
 
     observed = float(statistic(target_ranks(gather_scores(similarity, columns), target_positions)))
 
+    if groups is not None:
+        groups = np.asarray(groups)
+        if len(groups) != len(columns):
+            raise ValueError(f"{len(groups)} group labels for {len(columns)} queries")
+
     rng = np.random.default_rng(seed)
     n_queries = len(columns)
     draws = np.empty(n_permutations, dtype=float)
     for i in range(n_permutations):
-        shuffled = rng.permutation(n_queries)
+        shuffled = (
+            rng.permutation(n_queries) if groups is None else grouped_permutation(groups, rng)
+        )
         ranks = target_ranks(gather_scores(similarity, columns, shuffled), target_positions)
         draws[i] = statistic(ranks)
 

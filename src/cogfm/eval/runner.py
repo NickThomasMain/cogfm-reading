@@ -32,7 +32,7 @@ from cogfm.eval.permutation import (
     gather_scores,
     permutation_null,
 )
-from cogfm.eval.pools import build_pools, pools_by_sentence
+from cogfm.eval.pools import CandidatePool, build_pools, pools_by_sentence
 
 
 @dataclass(frozen=True)
@@ -80,6 +80,8 @@ def evaluate_similarity(
     permutation_seed: int = 0,
     ks: tuple[int, ...] = DEFAULT_KS,
     statistics: dict[str, Callable[[np.ndarray], float]] | None = None,
+    pools: list[CandidatePool] | None = None,
+    query_subjects: np.ndarray | None = None,
 ) -> FoldEvaluation:
     """Score every query against its sentence's pool and summarise the result.
 
@@ -98,6 +100,11 @@ def evaluate_similarity(
         permutation_seed: controls the shuffles.
         ks: recall cutoffs to report.
         statistics: statistics to draw a null for; the defaults if None.
+        pools: ready-made pools to score against, which overrides ``pool_size``
+            and ``tolerance``. Use it for the two-alternative decoy test.
+        query_subjects: who produced each query. When given, the null shuffles
+            only within a subject's own trials, which rules out a signal that
+            comes from the reader rather than the text.
 
     Returns:
         The metrics, the nulls they are held against, and how many queries and
@@ -120,9 +127,13 @@ def evaluate_similarity(
             f"{len(query_sentence_ids)} query sentences for {len(similarity)} queries"
         )
 
-    pools, unservable = build_pools(
-        sentences, sentence_order, pool_size=pool_size, tolerance=tolerance, seed=pool_seed
-    )
+    if pools is None:
+        pools, unservable = build_pools(
+            sentences, sentence_order, pool_size=pool_size, tolerance=tolerance, seed=pool_seed
+        )
+    else:
+        unservable = np.array([], dtype=np.int64)
+        pool_size = len(pools[0]) if pools else pool_size
     by_sentence = pools_by_sentence(pools)
 
     kept = np.flatnonzero([int(s) in by_sentence for s in query_sentence_ids])
@@ -145,6 +156,8 @@ def evaluate_similarity(
     ranks = target_ranks(gather_scores(kept_similarity, columns), targets)
     metrics = summarize_ranks(ranks, pool_size=pool_size, ks=ks)
 
+    groups = None if query_subjects is None else np.asarray(query_subjects)[kept]
+
     nulls: dict[str, PermutationResult] = {}
     if n_permutations > 0:
         chosen = statistics if statistics is not None else default_statistics(pool_size)
@@ -157,6 +170,7 @@ def evaluate_similarity(
                 name=name,
                 n_permutations=n_permutations,
                 seed=permutation_seed,
+                groups=groups,
             )
 
     return FoldEvaluation(

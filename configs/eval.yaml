@@ -16,7 +16,7 @@ conditions:
     encoder: trivial
     embed_dim: 7
   - name: random
-    encoder: scanpath
+    encoder: scanez
     embed_dim: 128
 
 optimizer:
@@ -37,3 +37,8 @@ eval:
   permutation_seed: 0
   batch_size: 256
   headline_metric: recall@1
+
+  # Extra controls. Each re-scores the run that already happened, so they cost
+  # permutations rather than training time.
+  within_subject_null: true    # shuffle only inside one reader's own trials
+  decoy_test: true             # two candidates matched on count and word length

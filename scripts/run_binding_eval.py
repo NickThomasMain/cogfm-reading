@@ -34,6 +34,7 @@ import cogfm.losses  # noqa: F401
 from cogfm.binding.model import BindingModel
 from cogfm.data.adapters.zuco import ZuCoReadingDataset
 from cogfm.data.splits import make_folds
+from cogfm.eval.pools import build_decoy_pools
 from cogfm.eval.report import aggregate, format_gaps, format_result_row
 from cogfm.eval.runner import embed_fold, evaluate_similarity
 from cogfm.registry import ANCHORS, CONNECTORS, ENCODERS, LOSSES
@@ -85,6 +86,8 @@ def main(cfg: DictConfig) -> None:
     anchor = build_anchor(cfg)
 
     summaries = []
+    within_subject: dict[str, list] = {}
+    decoys: dict[str, list] = {}
     for condition in cfg.conditions:
         records = []
         for index in wanted:
@@ -117,25 +120,80 @@ def main(cfg: DictConfig) -> None:
                 fold.test_sentences,
                 batch_size=cfg.eval.batch_size,
             )
+            query_subjects = dataset.subject_ids[fold.test]
+            shared = dict(
+                sentences=dataset.sentences,
+                fold=index,
+                n_permutations=cfg.eval.n_permutations,
+                permutation_seed=cfg.eval.permutation_seed,
+            )
+
             record = evaluate_similarity(
                 similarity,
                 order,
                 query_sentences,
-                dataset.sentences,
                 condition=condition.name,
-                fold=index,
                 pool_size=cfg.eval.pool_size,
                 tolerance=cfg.eval.tolerance,
                 pool_seed=cfg.eval.pool_seed,
-                n_permutations=cfg.eval.n_permutations,
-                permutation_seed=cfg.eval.permutation_seed,
+                **shared,
             )
             log.info("%s", record)
             records.append(record)
+
+            # Same run, stricter null: shuffling stays inside one reader's own
+            # trials, so a signal carried by reading style rather than by text
+            # no longer survives as a result.
+            if cfg.eval.within_subject_null:
+                strict = evaluate_similarity(
+                    similarity,
+                    order,
+                    query_sentences,
+                    condition=f"{condition.name}+within",
+                    pool_size=cfg.eval.pool_size,
+                    tolerance=cfg.eval.tolerance,
+                    pool_seed=cfg.eval.pool_seed,
+                    query_subjects=query_subjects,
+                    **shared,
+                )
+                log.info("%s", strict)
+                within_subject.setdefault(condition.name, []).append(strict)
+
+            # Two candidates matched on word count and word length, so chance
+            # is one half and length alone cannot decide.
+            if cfg.eval.decoy_test:
+                pools = build_decoy_pools(
+                    dataset.sentences, fold.test_sentences, seed=cfg.eval.pool_seed
+                )
+                decoy_record = evaluate_similarity(
+                    similarity,
+                    order,
+                    query_sentences,
+                    condition=f"{condition.name}+decoy",
+                    pools=pools,
+                    query_subjects=query_subjects if cfg.eval.within_subject_null else None,
+                    **shared,
+                )
+                log.info("%s", decoy_record)
+                decoys.setdefault(condition.name, []).append(decoy_record)
+
         summaries.append(aggregate(records))
 
-    print("\n" + format_result_row(summaries))
+    print("\n=== Hauptergebnis: Pool %d, Längentoleranz +/-%d ===" % (
+        cfg.eval.pool_size, cfg.eval.tolerance))
+    print(format_result_row(summaries))
     print("\n" + format_gaps(summaries, metric=cfg.eval.headline_metric))
+
+    if within_subject:
+        print("\n=== Kontrolle: Null nur innerhalb eines Probanden ===")
+        print("Steigt die Null hier auf das gemessene Niveau, hängt das Ergebnis")
+        print("am Leseverhalten der Person und nicht am Text.")
+        print(format_result_row([aggregate(r) for r in within_subject.values()]))
+
+    if decoys:
+        print("\n=== Kontrolle: zwei oberflächenangepasste Kandidaten, Zufall 0.500 ===")
+        print(format_result_row([aggregate(r) for r in decoys.values()]))
+
     print("\nKonfiguration:\n" + OmegaConf.to_yaml(cfg.eval))
 
 

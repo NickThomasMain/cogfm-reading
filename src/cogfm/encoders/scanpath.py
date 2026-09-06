@@ -5,7 +5,11 @@ correctly shaped modality embedding. It can be replaced by a real, pretrained,
 frozen scanpath encoder (e.g. ScanEZ) behind the same interface.
 
 It projects each fixation's (x, y, duration) to embed_dim and mean-pools over the
-(unpadded) fixations.
+(unpadded) fixations. Since an affine map commutes with an average, the result
+equals a projection of the mean fixation: the whole scanpath collapses to its
+mean x, mean y and mean duration, and a shuffled scanpath encodes identically.
+That makes it useful as a smoke-test component and unsuitable as a stand-in for
+a sequence model; see ScanEZEncoder for one that reads the order.
 """
 
 from __future__ import annotations
