@@ -45,14 +45,27 @@ from cogfm.binding.train import train_connector
 log = logging.getLogger(__name__)
 
 
-def build_model(cfg: DictConfig, encoder_name: str, encoder_dim: int) -> BindingModel:
+def build_anchor(cfg: DictConfig):
+    """Load the anchor once, to be shared by every condition and fold.
+
+    The anchor is frozen and evaluated without dropout, so it returns the same
+    vector for a sentence no matter which run asks. Rebuilding it per condition
+    would reload the weights and re-encode the corpus for nothing, and would
+    throw away the sentence cache each time.
+    """
+    params = {k: v for k, v in cfg.anchor.items() if k not in ("name", "dim")}
+    anchor = ANCHORS.build(cfg.anchor.name, dim=cfg.anchor.dim, **params)
+    anchor.requires_grad_(False)
+    return anchor
+
+
+def build_model(cfg: DictConfig, encoder_name: str, encoder_dim: int, anchor) -> BindingModel:
     """Assemble the two towers with one condition's encoder in place."""
     encoder = ENCODERS.build(encoder_name, embed_dim=encoder_dim)
     connector_params = {k: v for k, v in cfg.connector.items() if k != "name"}
     connector = CONNECTORS.build(
         cfg.connector.name, in_dim=encoder_dim, out_dim=cfg.anchor.dim, **connector_params
     )
-    anchor = ANCHORS.build(cfg.anchor.name, dim=cfg.anchor.dim, vocab_size=cfg.anchor.vocab_size)
     return BindingModel(encoder, connector, anchor)
 
 
@@ -69,6 +82,8 @@ def main(cfg: DictConfig) -> None:
     wanted = list(cfg.eval.folds) if cfg.eval.folds else list(range(len(folds)))
     log.info("%d trials, %d sentences, folds %s", len(dataset), len(dataset.sentences), wanted)
 
+    anchor = build_anchor(cfg)
+
     summaries = []
     for condition in cfg.conditions:
         records = []
@@ -76,9 +91,8 @@ def main(cfg: DictConfig) -> None:
             fold = folds[index]
             set_seed(cfg.seed + index)
 
-            model = build_model(cfg, condition.encoder, condition.embed_dim)
+            model = build_model(cfg, condition.encoder, condition.embed_dim, anchor)
             model.encoder.requires_grad_(False)
-            model.anchor.requires_grad_(False)
             optimizer = torch.optim.Adam(
                 model.connector.parameters(),
                 lr=cfg.optimizer.lr,

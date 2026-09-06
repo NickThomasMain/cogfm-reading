@@ -81,7 +81,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.26" },
     { name = "scipy", specifier = ">=1.17.1" },
     { name = "torch", specifier = ">=2.2" },
-    { name = "transformers", specifier = ">=4.40" },
+    { name = "transformers", specifier = ">=4.51" },
 ]
 
 [package.metadata.requires-dev]

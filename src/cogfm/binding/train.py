@@ -46,7 +46,8 @@ def _build_model(cfg: DictConfig) -> BindingModel:
         out_dim=cfg.anchor.dim,
         **connector_params,
     )
-    anchor = ANCHORS.build(cfg.anchor.name, dim=cfg.anchor.dim, vocab_size=cfg.anchor.vocab_size)
+    anchor_params = {k: v for k, v in cfg.anchor.items() if k not in ("name", "dim")}
+    anchor = ANCHORS.build(cfg.anchor.name, dim=cfg.anchor.dim, **anchor_params)
     return BindingModel(encoder, connector, anchor)
 
 

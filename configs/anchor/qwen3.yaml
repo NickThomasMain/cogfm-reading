@@ -1,0 +1,9 @@
+# Frozen decoder LLM as the anchor space. dim must equal the model's hidden
+# size: 1024 for Qwen3-0.6B, 2048 for Qwen3-1.7B, 2560 for Qwen3-4B.
+name: qwen3
+model_name: Qwen/Qwen3-0.6B
+dim: 1024
+pooling: word_mean     # word_mean | token_mean | last_token
+device: auto
+max_length: 512
+batch_size: 32
