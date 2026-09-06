@@ -115,6 +115,67 @@ def _evaluate(model: BindingModel, loss_fn, dataset: Dataset, batch_size: int) -
     }
 
 
+def train_connector(
+    model: BindingModel,
+    loss_fn,
+    optimizer,
+    train_set: Dataset,
+    max_steps: int,
+    batch_size: int,
+    seed: int = 0,
+    log_every: int = 0,
+) -> tuple[float, float]:
+    """Train the connector for a fixed number of steps and report the loss ends.
+
+    Encoder and anchor stay frozen, so gradients reach the connector alone. The
+    loader cycles, which means a step count above one epoch simply revisits the
+    data.
+
+    Args:
+        model: the two towers, already built.
+        loss_fn: returns (loss, logits) for a modality and a text batch.
+        optimizer: updates whatever parameters it was given.
+        train_set: the training split of one fold.
+        max_steps: optimisation steps to run.
+        batch_size: samples per step; the number of negatives a contrastive
+            loss sees is one less than this, so small batches weaken it.
+        seed: controls shuffling.
+        log_every: log the loss every so many steps; silent when zero.
+
+    Returns:
+        The loss after the first step and after the last.
+    """
+    generator = torch.Generator().manual_seed(seed)
+    loader = DataLoader(
+        train_set,
+        batch_size=batch_size,
+        shuffle=True,
+        collate_fn=batch_reading_samples,
+        generator=generator,
+        drop_last=len(train_set) > batch_size,
+    )
+
+    model.train()
+    batches = cycle(loader)
+    first_loss = final_loss = float("nan")
+    for step in range(1, max_steps + 1):
+        batch = next(batches)
+        modality = model.encode_modality(batch["scanpath"], batch["mask"])
+        text = model.encode_text(batch["text"])
+        loss, _ = loss_fn(modality, text)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        final_loss = loss.item()
+        if step == 1:
+            first_loss = final_loss
+        if log_every and step % log_every == 0:
+            log.info("step %d/%d  loss=%.4f", step, max_steps, final_loss)
+    return first_loss, final_loss
+
+
 def run_pipeline_check(cfg: DictConfig) -> dict:
     set_seed(cfg.seed)
 
@@ -131,33 +192,15 @@ def run_pipeline_check(cfg: DictConfig) -> dict:
     )
 
     train_set, eval_set = _build_datasets(cfg)
-    generator = torch.Generator().manual_seed(cfg.seed)
-    loader = DataLoader(
+    first_loss, final_loss = train_connector(
+        model,
+        loss_fn,
+        optimizer,
         train_set,
+        max_steps=cfg.training.max_steps,
         batch_size=cfg.training.batch_size,
-        shuffle=True,
-        collate_fn=batch_reading_samples,
-        generator=generator,
-        drop_last=len(train_set) > cfg.training.batch_size,
+        seed=cfg.seed,
     )
-
-    model.train()
-    batches = cycle(loader)
-    first_loss = final_loss = float("nan")
-    for step in range(1, cfg.training.max_steps + 1):
-        batch = next(batches)
-        modality = model.encode_modality(batch["scanpath"], batch["mask"])
-        text = model.encode_text(batch["text"])
-        loss, _ = loss_fn(modality, text)
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        final_loss = loss.item()
-        if step == 1:
-            first_loss = final_loss
-        log.info("step %d/%d  loss=%.4f", step, cfg.training.max_steps, final_loss)
 
     metrics = _evaluate(model, loss_fn, eval_set, cfg.training.batch_size)
     metrics["first_loss"] = first_loss

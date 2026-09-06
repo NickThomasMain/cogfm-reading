@@ -1,0 +1,5 @@
+# Surface statistics of the scanpath, the baseline a binding result has to beat.
+# embed_dim is fixed by the feature list and must not be changed here.
+name: trivial
+modality: eye_tracking
+embed_dim: 7
