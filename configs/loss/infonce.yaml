@@ -1,3 +1,7 @@
-# InfoNCE contrastive loss (placeholder config).
+# InfoNCE contrastive loss.
+# The temperature decides how sharply the loss separates the correct pair from
+# the rest of the batch. A lower value pushes harder on the near misses, which
+# is what a gaze signal needs: its neighbours in the batch are sentences of a
+# similar length, and those are exactly the ones that must be told apart.
 name: infonce
-temperature: 0.07
+temperature: 0.05

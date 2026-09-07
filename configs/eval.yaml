@@ -11,7 +11,13 @@ seed: 42
 # One entry per column of the result row, in the order they should be read.
 # embed_dim must match what the encoder produces: 7 for the trivial features,
 # the configured width for a learned encoder.
+# The first column is the floor: an encoder that answers with noise, so its
+# value is what the evaluation reports when nothing can be found. It is what
+# the analytic chance level and the permutation null are checked against.
 conditions:
+  - name: noise
+    encoder: noise
+    embed_dim: 128
   - name: trivial
     encoder: trivial
     embed_dim: 7

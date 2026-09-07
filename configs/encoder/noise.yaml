@@ -1,0 +1,8 @@
+# A fixed random vector per trial, carrying nothing about the scanpath. This is
+# the floor of the result row: what the evaluation returns when there is no
+# signal to find. embed_dim is free and is matched to the learned encoder so
+# that every condition trains the same connector.
+name: noise
+modality: eye_tracking
+embed_dim: 128
+seed: 0

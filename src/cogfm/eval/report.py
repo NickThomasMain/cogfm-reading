@@ -136,9 +136,14 @@ def format_result_row(
 
     lines.append("")
     for name in present:
-        nulls = [s.metrics[name].null_mean for s in summaries if name in s.metrics]
-        if nulls:
-            lines.append(f"  Permutationsnull {name:12s} {np.mean(nulls):.4f}")
+        nulls = [(s.condition, s.metrics[name].null_mean) for s in summaries if name in s.metrics]
+        if not nulls:
+            continue
+        # Per condition rather than pooled: a condition that carries signal can
+        # move its own null, and a single averaged number would hide exactly
+        # that. Where the nulls differ, the difference is the finding.
+        parts = "  ".join(f"{condition} {value:.4f}" for condition, value in nulls)
+        lines.append(f"  Permutationsnull {name:12s} {parts}")
     return "\n".join(lines)
 
 
