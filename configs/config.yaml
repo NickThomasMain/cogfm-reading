@@ -2,7 +2,7 @@
 #
 # The `defaults` list picks one file from each group directory. Override any of
 # them on the command line, e.g.:
-#   uv run python scripts/print_config.py data=zuco connector=linear
+#   uv run python scripts/print_config.py data=zuco_et connector=linear
 #
 defaults:
   - data: dummy           # -> configs/data/dummy.yaml

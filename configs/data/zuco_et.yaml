@@ -1,6 +1,6 @@
 # ZuCo 1.0, read from the files written by scripts/extract_zuco.py.
 # Requires that extraction has been run; see that script for the layout.
-name: zuco
+name: zuco_et
 root: data/zuco/processed
 task: null          # null keeps both reading tasks; "SR" or "NR" restricts
 n_folds: 4

@@ -1,6 +1,6 @@
 """ZuCo 1.0 reading data, loaded from the extracted form.
 
-Reads the two files written by ``scripts/extract_zuco.py``: the sentence table
+Reads the two files written by ``scripts/extract_zuco_et.py``: the sentence table
 and the flattened scanpath store. The MATLAB sources are not touched here, so
 construction costs milliseconds rather than minutes.
 
@@ -21,10 +21,10 @@ from torch.utils.data import Dataset
 
 DEFAULT_ROOT = Path("data/zuco/processed")
 
-DATASET_ID = "zuco1"
+DATASET_ID = "zuco1-et"
 
 
-class ZuCoReadingDataset(Dataset):
+class ZuCoETDataset(Dataset):
     """Trials of ZuCo 1.0 as (text, scanpath) pairs.
 
     Args:
@@ -44,7 +44,7 @@ class ZuCoReadingDataset(Dataset):
         for path in (sentence_file, scanpath_file):
             if not path.is_file():
                 raise FileNotFoundError(
-                    f"{path} not found. Run scripts/extract_zuco.py --extract --merge first."
+                    f"{path} not found. Run scripts/extract_zuco_et.py --extract --merge first."
                 )
 
         self.sentences: list[dict] = json.loads(sentence_file.read_text(encoding="utf-8"))

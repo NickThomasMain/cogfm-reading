@@ -11,9 +11,9 @@ resumes instead of starting over. The merge step combines the caches, writes the
 two output files, and reports the verification checks.
 
 Usage:
-    python scripts/extract_zuco.py --extract      # process source files (resumable)
-    python scripts/extract_zuco.py --merge        # combine caches, write output, verify
-    python scripts/extract_zuco.py --extract --merge
+    python scripts/extract_zuco_et.py --extract      # process source files (resumable)
+    python scripts/extract_zuco_et.py --merge        # combine caches, write output, verify
+    python scripts/extract_zuco_et.py --extract --merge
 """
 
 from __future__ import annotations

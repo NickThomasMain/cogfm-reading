@@ -1,0 +1,27 @@
+# ZuCo 1.0 sentence-level EEG, read from the files written by
+# scripts/extract_zuco_eeg.py. Requires that extraction has been run.
+name: zuco_eeg
+root: data/zuco/processed
+task: null          # null keeps both reading tasks; "SR" or "NR" restricts
+n_folds: 4
+fold: 0             # which fold serves as the test split
+split_seed: 0
+
+# Reference handling. The literature settles this neither way -- LaBraM itself
+# never re-references and its corpora carry at least three different conventions
+# (see recherche/labram_referenzkonfigurationen.md). Both settings are therefore
+# meant to be run against each other as an ablation.
+#   average    subtract the per-time-point mean over all 105 columns, Cz
+#              included. Recovers Cz as a channel; matches the ZuCo authors' own
+#              code on this field and TUAB, LaBraM's main fine-tuning corpus.
+#   recording  leave the Cz recording reference in place; the constant Cz column
+#              is dropped, leaving 61 named channels instead of 62.
+reference: average
+
+# egi62    62 positions within EGI's own 1.85 cm criterion (61 under "recording")
+# named69  every position with a 10-10 name, including seven at 2.0-2.5 cm
+# all      every column; the unnamed ones cannot be fed to LaBraM
+channels: egi62
+
+legacy_names: false   # T3/T4/T5/T6 instead of T7/T8/P7/P8, as the TUH corpora spell them
+resample_hz: 200      # LaBraM expects 200 Hz; null keeps the stored 500 Hz

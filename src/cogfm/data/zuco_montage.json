@@ -1,0 +1,630 @@
+{
+  "source": "Luu & Ferree, 'Determination of the HydroCel Geodesic Sensor Nets' Average Electrode Positions and Their 10-10 International Equivalents', EGI Technical Note, rev. 2005-10-24, Table 1 (128-Channel HCGSN 58 Centimeters).",
+  "egi_threshold_cm": 1.8462,
+  "threshold_rule": "0.20 x sphere radius; 58 cm circumference -> r = 9.231 cm.",
+  "column_order": "Column index into ZuCo rawData as extracted, i.e. EEG.chanlocs order: E2..E124 then Cz.",
+  "note_cz": "Column 104 (Cz) is the recording reference and is constant zero unless the data are re-referenced.",
+  "channels": [
+    {
+      "name": "AF8",
+      "legacy": null,
+      "hydrocel": 2,
+      "column": 0,
+      "zuco_label": "E2",
+      "arc_cm": 0.879,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "AF4",
+      "legacy": null,
+      "hydrocel": 3,
+      "column": 1,
+      "zuco_label": "E3",
+      "arc_cm": 0.5147,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "F2",
+      "legacy": null,
+      "hydrocel": 4,
+      "column": 2,
+      "zuco_label": "E4",
+      "arc_cm": 0.6355,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "FCZ",
+      "legacy": null,
+      "hydrocel": 6,
+      "column": 4,
+      "zuco_label": "E6",
+      "arc_cm": 0.8398,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "FP2",
+      "legacy": null,
+      "hydrocel": 9,
+      "column": 6,
+      "zuco_label": "E9",
+      "arc_cm": 0.724,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "FZ",
+      "legacy": null,
+      "hydrocel": 11,
+      "column": 8,
+      "zuco_label": "E11",
+      "arc_cm": 0.7826,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "FC1",
+      "legacy": null,
+      "hydrocel": 13,
+      "column": 10,
+      "zuco_label": "E13",
+      "arc_cm": 0.906,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "FPZ",
+      "legacy": null,
+      "hydrocel": 15,
+      "column": 11,
+      "zuco_label": "E15",
+      "arc_cm": 2.1535,
+      "within_egi_threshold": false
+    },
+    {
+      "name": "AFZ",
+      "legacy": null,
+      "hydrocel": 16,
+      "column": 12,
+      "zuco_label": "E16",
+      "arc_cm": 0.4809,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "F1",
+      "legacy": null,
+      "hydrocel": 19,
+      "column": 14,
+      "zuco_label": "E19",
+      "arc_cm": 1.07,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "FP1",
+      "legacy": null,
+      "hydrocel": 22,
+      "column": 16,
+      "zuco_label": "E22",
+      "arc_cm": 0.6765,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "AF3",
+      "legacy": null,
+      "hydrocel": 23,
+      "column": 17,
+      "zuco_label": "E23",
+      "arc_cm": 1.361,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "F3",
+      "legacy": null,
+      "hydrocel": 24,
+      "column": 18,
+      "zuco_label": "E24",
+      "arc_cm": 0.795,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "AF7",
+      "legacy": null,
+      "hydrocel": 26,
+      "column": 19,
+      "zuco_label": "E26",
+      "arc_cm": 1.5259,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "F5",
+      "legacy": null,
+      "hydrocel": 27,
+      "column": 20,
+      "zuco_label": "E27",
+      "arc_cm": 0.7967,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "FC5",
+      "legacy": null,
+      "hydrocel": 28,
+      "column": 21,
+      "zuco_label": "E28",
+      "arc_cm": 0.947,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "FC3",
+      "legacy": null,
+      "hydrocel": 29,
+      "column": 22,
+      "zuco_label": "E29",
+      "arc_cm": 0.9924,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "C1",
+      "legacy": null,
+      "hydrocel": 30,
+      "column": 23,
+      "zuco_label": "E30",
+      "arc_cm": 0.6976,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "F7",
+      "legacy": null,
+      "hydrocel": 33,
+      "column": 25,
+      "zuco_label": "E33",
+      "arc_cm": 2.1351,
+      "within_egi_threshold": false
+    },
+    {
+      "name": "FT7",
+      "legacy": null,
+      "hydrocel": 34,
+      "column": 26,
+      "zuco_label": "E34",
+      "arc_cm": 1.4461,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "C3",
+      "legacy": null,
+      "hydrocel": 36,
+      "column": 28,
+      "zuco_label": "E36",
+      "arc_cm": 0.4362,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "CP1",
+      "legacy": null,
+      "hydrocel": 37,
+      "column": 29,
+      "zuco_label": "E37",
+      "arc_cm": 1.1053,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "FT9",
+      "legacy": null,
+      "hydrocel": 38,
+      "column": 30,
+      "zuco_label": "E38",
+      "arc_cm": 1.4249,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "C5",
+      "legacy": null,
+      "hydrocel": 41,
+      "column": 33,
+      "zuco_label": "E41",
+      "arc_cm": 1.0591,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "CP3",
+      "legacy": null,
+      "hydrocel": 42,
+      "column": 34,
+      "zuco_label": "E42",
+      "arc_cm": 0.8415,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "T9",
+      "legacy": null,
+      "hydrocel": 44,
+      "column": 36,
+      "zuco_label": "E44",
+      "arc_cm": 2.0185,
+      "within_egi_threshold": false
+    },
+    {
+      "name": "T7",
+      "legacy": "T3",
+      "hydrocel": 45,
+      "column": 37,
+      "zuco_label": "E45",
+      "arc_cm": 2.4458,
+      "within_egi_threshold": false
+    },
+    {
+      "name": "TP7",
+      "legacy": null,
+      "hydrocel": 46,
+      "column": 38,
+      "zuco_label": "E46",
+      "arc_cm": 1.1408,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "CP5",
+      "legacy": null,
+      "hydrocel": 47,
+      "column": 39,
+      "zuco_label": "E47",
+      "arc_cm": 0.3303,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "P5",
+      "legacy": null,
+      "hydrocel": 51,
+      "column": 41,
+      "zuco_label": "E51",
+      "arc_cm": 1.4249,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "P3",
+      "legacy": null,
+      "hydrocel": 52,
+      "column": 42,
+      "zuco_label": "E52",
+      "arc_cm": 1.7003,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "CPZ",
+      "legacy": null,
+      "hydrocel": 55,
+      "column": 45,
+      "zuco_label": "E55",
+      "arc_cm": 0.3378,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "TP9",
+      "legacy": null,
+      "hydrocel": 57,
+      "column": 46,
+      "zuco_label": "E57",
+      "arc_cm": 1.1212,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "P7",
+      "legacy": "T5",
+      "hydrocel": 58,
+      "column": 47,
+      "zuco_label": "E58",
+      "arc_cm": 1.5888,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "P1",
+      "legacy": null,
+      "hydrocel": 60,
+      "column": 49,
+      "zuco_label": "E60",
+      "arc_cm": 0.4204,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "PZ",
+      "legacy": null,
+      "hydrocel": 62,
+      "column": 51,
+      "zuco_label": "E62",
+      "arc_cm": 0.7417,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "P9",
+      "legacy": null,
+      "hydrocel": 64,
+      "column": 52,
+      "zuco_label": "E64",
+      "arc_cm": 2.2846,
+      "within_egi_threshold": false
+    },
+    {
+      "name": "PO7",
+      "legacy": null,
+      "hydrocel": 65,
+      "column": 53,
+      "zuco_label": "E65",
+      "arc_cm": 1.4502,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "PO3",
+      "legacy": null,
+      "hydrocel": 67,
+      "column": 55,
+      "zuco_label": "E67",
+      "arc_cm": 1.2343,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "O1",
+      "legacy": null,
+      "hydrocel": 70,
+      "column": 57,
+      "zuco_label": "E70",
+      "arc_cm": 1.7697,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "POZ",
+      "legacy": null,
+      "hydrocel": 72,
+      "column": 59,
+      "zuco_label": "E72",
+      "arc_cm": 0.3188,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "OZ",
+      "legacy": null,
+      "hydrocel": 75,
+      "column": 61,
+      "zuco_label": "E75",
+      "arc_cm": 1.044,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "PO4",
+      "legacy": null,
+      "hydrocel": 77,
+      "column": 63,
+      "zuco_label": "E77",
+      "arc_cm": 1.2887,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "O2",
+      "legacy": null,
+      "hydrocel": 83,
+      "column": 68,
+      "zuco_label": "E83",
+      "arc_cm": 1.5508,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "P2",
+      "legacy": null,
+      "hydrocel": 85,
+      "column": 70,
+      "zuco_label": "E85",
+      "arc_cm": 1.0778,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "CP2",
+      "legacy": null,
+      "hydrocel": 87,
+      "column": 72,
+      "zuco_label": "E87",
+      "arc_cm": 0.7698,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "PO8",
+      "legacy": null,
+      "hydrocel": 90,
+      "column": 74,
+      "zuco_label": "E90",
+      "arc_cm": 1.7738,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "P4",
+      "legacy": null,
+      "hydrocel": 92,
+      "column": 76,
+      "zuco_label": "E92",
+      "arc_cm": 0.8847,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "CP4",
+      "legacy": null,
+      "hydrocel": 93,
+      "column": 77,
+      "zuco_label": "E93",
+      "arc_cm": 0.4995,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "P10",
+      "legacy": null,
+      "hydrocel": 95,
+      "column": 78,
+      "zuco_label": "E95",
+      "arc_cm": 1.8102,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "P8",
+      "legacy": "T6",
+      "hydrocel": 96,
+      "column": 79,
+      "zuco_label": "E96",
+      "arc_cm": 1.1526,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "P6",
+      "legacy": null,
+      "hydrocel": 97,
+      "column": 80,
+      "zuco_label": "E97",
+      "arc_cm": 0.9459,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "CP6",
+      "legacy": null,
+      "hydrocel": 98,
+      "column": 81,
+      "zuco_label": "E98",
+      "arc_cm": 0.4979,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "TP10",
+      "legacy": null,
+      "hydrocel": 100,
+      "column": 82,
+      "zuco_label": "E100",
+      "arc_cm": 1.2234,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "TP8",
+      "legacy": null,
+      "hydrocel": 102,
+      "column": 84,
+      "zuco_label": "E102",
+      "arc_cm": 1.8359,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "C6",
+      "legacy": null,
+      "hydrocel": 103,
+      "column": 85,
+      "zuco_label": "E103",
+      "arc_cm": 1.0468,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "C4",
+      "legacy": null,
+      "hydrocel": 104,
+      "column": 86,
+      "zuco_label": "E104",
+      "arc_cm": 0.4971,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "C2",
+      "legacy": null,
+      "hydrocel": 105,
+      "column": 87,
+      "zuco_label": "E105",
+      "arc_cm": 0.0727,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "T8",
+      "legacy": "T4",
+      "hydrocel": 108,
+      "column": 89,
+      "zuco_label": "E108",
+      "arc_cm": 2.1555,
+      "within_egi_threshold": false
+    },
+    {
+      "name": "FC4",
+      "legacy": null,
+      "hydrocel": 111,
+      "column": 92,
+      "zuco_label": "E111",
+      "arc_cm": 1.071,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "FC2",
+      "legacy": null,
+      "hydrocel": 112,
+      "column": 93,
+      "zuco_label": "E112",
+      "arc_cm": 1.2771,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "T10",
+      "legacy": null,
+      "hydrocel": 114,
+      "column": 94,
+      "zuco_label": "E114",
+      "arc_cm": 2.1788,
+      "within_egi_threshold": false
+    },
+    {
+      "name": "FT8",
+      "legacy": null,
+      "hydrocel": 116,
+      "column": 96,
+      "zuco_label": "E116",
+      "arc_cm": 1.7161,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "FC6",
+      "legacy": null,
+      "hydrocel": 117,
+      "column": 97,
+      "zuco_label": "E117",
+      "arc_cm": 1.6516,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "FT10",
+      "legacy": null,
+      "hydrocel": 121,
+      "column": 100,
+      "zuco_label": "E121",
+      "arc_cm": 1.6777,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "F8",
+      "legacy": null,
+      "hydrocel": 122,
+      "column": 101,
+      "zuco_label": "E122",
+      "arc_cm": 1.5107,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "F6",
+      "legacy": null,
+      "hydrocel": 123,
+      "column": 102,
+      "zuco_label": "E123",
+      "arc_cm": 0.1114,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "F4",
+      "legacy": null,
+      "hydrocel": 124,
+      "column": 103,
+      "zuco_label": "E124",
+      "arc_cm": 0.2511,
+      "within_egi_threshold": true
+    },
+    {
+      "name": "CZ",
+      "legacy": null,
+      "hydrocel": 129,
+      "column": 104,
+      "zuco_label": "Cz",
+      "arc_cm": 0.0,
+      "within_egi_threshold": true
+    }
+  ]
+}

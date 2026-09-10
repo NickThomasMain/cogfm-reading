@@ -32,7 +32,7 @@ import cogfm.connectors  # noqa: F401
 import cogfm.encoders  # noqa: F401
 import cogfm.losses  # noqa: F401
 from cogfm.binding.model import BindingModel
-from cogfm.data.adapters.zuco import ZuCoReadingDataset
+from cogfm.data.adapters.zuco_et import ZuCoETDataset
 from cogfm.data.splits import make_folds
 from cogfm.eval.pools import build_decoy_pools
 from cogfm.eval.report import aggregate, format_gaps, format_result_row
@@ -72,7 +72,7 @@ def build_model(cfg: DictConfig, encoder_name: str, encoder_dim: int, anchor) ->
 
 @hydra.main(version_base=None, config_path="../configs", config_name="eval")
 def main(cfg: DictConfig) -> None:
-    dataset = ZuCoReadingDataset(root=cfg.data.root, task=cfg.data.task)
+    dataset = ZuCoETDataset(root=cfg.data.root, task=cfg.data.task)
     folds = make_folds(
         dataset.subject_ids,
         dataset.sentence_ids,

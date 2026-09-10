@@ -48,13 +48,13 @@ def test_unknown_dataset_is_rejected():
 
 @pytest.mark.skipif(
     not (ZUCO_ROOT / "scanpaths.npz").is_file(),
-    reason="ZuCo has not been extracted; run scripts/extract_zuco.py",
+    reason="ZuCo has not been extracted; run scripts/extract_zuco_et.py",
 )
-def test_runs_on_zuco_fold():
+def test_runs_on_zuco_et_fold():
     """The same loop on real data, over one subject- and item-disjoint fold."""
     cfg = _cfg(
         {
-            "name": "zuco",
+            "name": "zuco_et",
             "root": str(ZUCO_ROOT),
             "task": None,
             "n_folds": 4,

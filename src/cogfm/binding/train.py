@@ -26,7 +26,7 @@ import cogfm.connectors  # noqa: F401
 import cogfm.encoders  # noqa: F401
 import cogfm.losses  # noqa: F401
 from cogfm.binding.model import BindingModel
-from cogfm.data.adapters.zuco import ZuCoReadingDataset
+from cogfm.data.adapters.zuco_et import ZuCoETDataset
 from cogfm.data.batching import batch_reading_samples
 from cogfm.data.dummy import DummyReadingDataset
 from cogfm.data.splits import make_folds, untested
@@ -67,8 +67,8 @@ def _build_datasets(cfg: DictConfig) -> tuple[Dataset, Dataset]:
         log.info("dummy data: %d samples, %d fixations each", len(dataset), cfg.data.n_fixations)
         return dataset, dataset
 
-    if name == "zuco":
-        dataset = ZuCoReadingDataset(root=cfg.data.root, task=cfg.data.task)
+    if name == "zuco_et":
+        dataset = ZuCoETDataset(root=cfg.data.root, task=cfg.data.task)
         folds = make_folds(
             dataset.subject_ids,
             dataset.sentence_ids,
@@ -81,7 +81,7 @@ def _build_datasets(cfg: DictConfig) -> tuple[Dataset, Dataset]:
         fold = folds[cfg.data.fold]
         dropped = len(dataset) - len(fold.train) - len(fold.test)
         log.info(
-            "zuco fold %d of %d: %d train, %d test, %d dropped (%d trials, %d sentences total)",
+            "zuco_et fold %d of %d: %d train, %d test, %d dropped (%d trials, %d sentences total)",
             fold.index,
             len(folds),
             len(fold.train),
@@ -96,7 +96,7 @@ def _build_datasets(cfg: DictConfig) -> tuple[Dataset, Dataset]:
             log.info("sentences no fold tests: %d", len(never))
         return Subset(dataset, fold.train.tolist()), Subset(dataset, fold.test.tolist())
 
-    raise ValueError(f"unknown dataset '{name}'; expected 'dummy' or 'zuco'")
+    raise ValueError(f"unknown dataset '{name}'; expected 'dummy' or 'zuco_et'")
 
 
 def _evaluate(model: BindingModel, loss_fn, dataset: Dataset, batch_size: int) -> dict:

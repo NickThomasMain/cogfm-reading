@@ -1,6 +1,6 @@
 # Config for scripts/run_binding_eval.py: the full result row on ZuCo.
 defaults:
-  - data: zuco
+  - data: zuco_et
   - connector: mlp
   - anchor: standin
   - loss: infonce
