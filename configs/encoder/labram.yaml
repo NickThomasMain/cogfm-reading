@@ -1,4 +1,20 @@
-# EEG encoder (LaBraM, placeholder — no real model yet).
+# LaBraM as a frozen EEG encoder, via braindecode. Needs `uv add 'braindecode[hub]'`.
+#
+# Two checkpoints are in circulation and they differ. This one carries 128
+# channel positions and 16 one-second time patches, verified against the loaded
+# weights. The .pt file named in braindecode's docstring example is the smaller
+# 64-channel / 8-second variant; the encoder refuses it rather than clamping.
 name: labram
 modality: eeg
-embed_dim: 200
+embed_dim: 200            # LaBraM base
+
+checkpoint: braindecode/labram-pretrained
+
+# Channel names must line up with configs/data/zuco_eeg.yaml. Left as a
+# selection here, the encoder reads them from src/cogfm/data/zuco_montage.json;
+# the forward pass fails loudly if the batch has a different channel count.
+channels: egi62
+legacy_names: false
+
+max_patches: 16           # 16 s at 200 Hz; 270 of 7883 trials exceed this
+pooling: mean             # over valid patch tokens; "cls" uses the CLS token

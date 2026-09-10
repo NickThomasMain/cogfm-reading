@@ -1,0 +1,51 @@
+# Config for scripts/run_binding_eval.py on the EEG side of ZuCo.
+#
+# Same folds, same pools, same nulls, same connector and loss as the
+# eye-tracking row -- only the modality differs. That is what makes the two rows
+# comparable, and it is why the EEG adapter serves its vector under the same key
+# the eye-tracking one uses.
+#
+#   uv run python scripts/run_binding_eval.py --config-name eval_eeg
+#
+defaults:
+  - data: zuco_eeg_emb
+  - connector: mlp
+  - anchor: qwen3
+  - loss: infonce
+  - _self_
+
+seed: 42
+
+# No trivial-feature baseline here. On the eye-tracking side those seven
+# statistics answer "is this more than text length"; the equivalent for EEG
+# would have to summarise the signal itself, which is the encoder's own job.
+# This row is therefore read against chance and against the noise floor alone.
+conditions:
+  - name: noise
+    encoder: noise
+    embed_dim: 128
+  - name: labram
+    encoder: precomputed
+    embed_dim: 200          # LaBraM base hidden size; checked against the file
+
+optimizer:
+  lr: 0.001
+  weight_decay: 0.0
+
+training:
+  max_steps: 1500
+  batch_size: 128
+  log_every: 250
+
+eval:
+  folds: []            # empty runs every fold
+  pool_size: 25
+  tolerance: 3
+  pool_seed: 0
+  n_permutations: 1000
+  permutation_seed: 0
+  batch_size: 256
+  headline_metric: recall@1
+
+  within_subject_null: true    # shuffle only inside one reader's own trials
+  decoy_test: true             # two candidates matched on count and word length

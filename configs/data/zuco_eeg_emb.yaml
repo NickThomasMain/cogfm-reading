@@ -1,0 +1,22 @@
+# ZuCo 1.0 EEG as the vectors LaBraM has already produced, read from the file
+# scripts/embed_zuco_eeg.py wrote. The encoder is frozen, so the vectors are
+# fixed; see the adapter docstring for why they are not recomputed in the loop.
+#
+# The embedding file, not this config, decides reference, channel selection,
+# pooling and how over-long trials were handled. Point at a different file to
+# run a different ablation:
+#   eeg_embeddings_all_average_egi62_mean.npz     average reference (default)
+#   eeg_embeddings_all_recording_egi62_mean.npz   Cz recording reference
+name: zuco_eeg_emb
+root: data/zuco/processed
+embeddings: eeg_embeddings_all_average_egi62_mean.npz
+task: null          # null keeps both reading tasks; "SR" or "NR" restricts
+n_folds: 4
+fold: 0             # which fold serves as the test split
+split_seed: 0
+
+# none     vectors as stored
+# subject  subtract each reader's own mean; removes the strongest component in
+#          this space, but reads the test reader's other trials, so it is
+#          transductive and has to be reported that way
+center: none

@@ -12,9 +12,14 @@ Reading the row means reading the distances between neighbours. Beating the
 permutation null says only that something is there; beating the trivial
 features is what says it is not merely text length.
 
+Which modality runs is decided by the config, not by this file. The default
+config measures eye-tracking; ``--config-name eval_eeg`` measures the stored
+LaBraM vectors instead, through the identical folds, pools and nulls.
+
 Examples (from the repo root):
 
     uv run python scripts/run_binding_eval.py
+    uv run python scripts/run_binding_eval.py --config-name eval_eeg
     uv run python scripts/run_binding_eval.py training.max_steps=400 training.batch_size=256
     uv run python scripts/run_binding_eval.py eval.n_permutations=200 eval.folds=[0,1]
 """
@@ -32,6 +37,7 @@ import cogfm.connectors  # noqa: F401
 import cogfm.encoders  # noqa: F401
 import cogfm.losses  # noqa: F401
 from cogfm.binding.model import BindingModel
+from cogfm.data.adapters.zuco_eeg_embeddings import ZuCoEEGEmbeddingDataset
 from cogfm.data.adapters.zuco_et import ZuCoETDataset
 from cogfm.data.splits import make_folds
 from cogfm.eval.pools import build_decoy_pools
@@ -44,6 +50,28 @@ from torch.utils.data import Subset
 from cogfm.binding.train import train_connector
 
 log = logging.getLogger(__name__)
+
+
+def build_dataset(cfg: DictConfig):
+    """The dataset the config names, behind one interface.
+
+    Everything after this call is modality-blind: the same folds, pools, nulls,
+    connector and loss run whatever was returned here. A difference between the
+    eye-tracking row and the EEG row therefore cannot come from the evaluation.
+    """
+    name = cfg.data.name
+    if name == "zuco_et":
+        return ZuCoETDataset(root=cfg.data.root, task=cfg.data.task)
+    if name == "zuco_eeg_emb":
+        dataset = ZuCoEEGEmbeddingDataset(
+            root=cfg.data.root,
+            embeddings=cfg.data.embeddings,
+            task=cfg.data.task,
+            center=cfg.data.center,
+        )
+        log.info("%s", dataset.describe())
+        return dataset
+    raise ValueError(f"unknown dataset '{name}'; expected 'zuco_et' or 'zuco_eeg_emb'")
 
 
 def build_anchor(cfg: DictConfig):
@@ -72,7 +100,7 @@ def build_model(cfg: DictConfig, encoder_name: str, encoder_dim: int, anchor) ->
 
 @hydra.main(version_base=None, config_path="../configs", config_name="eval")
 def main(cfg: DictConfig) -> None:
-    dataset = ZuCoETDataset(root=cfg.data.root, task=cfg.data.task)
+    dataset = build_dataset(cfg)
     folds = make_folds(
         dataset.subject_ids,
         dataset.sentence_ids,

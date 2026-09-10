@@ -18,6 +18,7 @@ dependencies = [
     "torch>=2.2",
     "transformers>=4.51",   # Qwen3 support
     "scipy>=1.17.1",
+    "braindecode[hub]>=1.8.1",
 ]
 
 # Development-only tools; installed by `uv sync`, excluded from the shipped package.
