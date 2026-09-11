@@ -1,0 +1,51 @@
+# Config for scripts/run_binding_eval.py on ZuCo's own band power features,
+# averaged over the sentence.
+#
+# Differs from eval_eeg in exactly one place: what the vectors are. The signal
+# no longer passes through a pretrained encoder at all. ZuCo's pipeline computed
+# the eight band amplitudes per channel and the file holds them as they are, so
+# the trainable part is the connector alone.
+#
+#   uv run python scripts/run_binding_eval.py --config-name eval_eeg_bands
+#
+defaults:
+  - data: zuco_eeg_emb
+  - connector: mlp
+  - anchor: qwen3
+  - loss: infonce
+  - _self_
+
+seed: 42
+
+data:
+  embeddings: eeg_bands_TRT_sentence.npz
+
+conditions:
+  - name: noise
+    encoder: noise
+    embed_dim: 128
+  - name: bands
+    encoder: precomputed
+    embed_dim: 840          # 8 bands x 105 channels; checked against the file
+
+optimizer:
+  lr: 0.001
+  weight_decay: 0.0
+
+training:
+  max_steps: 1500
+  batch_size: 128
+  log_every: 250
+
+eval:
+  folds: []
+  pool_size: 25
+  tolerance: 3
+  pool_seed: 0
+  n_permutations: 1000
+  permutation_seed: 0
+  batch_size: 256
+  headline_metric: recall@1
+
+  within_subject_null: true
+  decoy_test: true

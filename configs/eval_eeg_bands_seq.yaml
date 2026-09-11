@@ -1,0 +1,52 @@
+# Config for scripts/run_binding_eval.py on ZuCo's band power features kept as a
+# sequence: one vector per word rather than one per sentence.
+#
+# Differs from eval_eeg_bands in exactly two places: the file holds sequences,
+# and the connector pools them itself instead of receiving a fixed mean. Folds,
+# pools, nulls, loss, anchor, step count and batch size are identical, so the
+# two rows read against each other.
+#
+#   uv run python scripts/run_binding_eval.py --config-name eval_eeg_bands_seq
+#
+defaults:
+  - data: zuco_eeg_emb
+  - connector: attention_pool
+  - anchor: qwen3
+  - loss: infonce
+  - _self_
+
+seed: 42
+
+data:
+  embeddings: eeg_bands_TRT_words.npz
+
+conditions:
+  - name: noise
+    encoder: noise
+    embed_dim: 128
+  - name: bands
+    encoder: precomputed
+    embed_dim: 840
+    sequence: true          # keep the word axis; the connector pools it
+
+optimizer:
+  lr: 0.001
+  weight_decay: 0.0
+
+training:
+  max_steps: 1500
+  batch_size: 128
+  log_every: 250
+
+eval:
+  folds: []
+  pool_size: 25
+  tolerance: 3
+  pool_seed: 0
+  n_permutations: 1000
+  permutation_seed: 0
+  batch_size: 256
+  headline_metric: recall@1
+
+  within_subject_null: true
+  decoy_test: true
