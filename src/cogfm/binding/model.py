@@ -35,7 +35,11 @@ class BindingModel(nn.Module):
     def encode_modality(
         self, scanpath: torch.Tensor, mask: torch.Tensor | None = None
     ) -> torch.Tensor:
-        features = self.encoder(scanpath, mask)  # (B, D_enc)
+        features = self.encoder(scanpath, mask)  # (B, D_enc), or (B, T, D_enc)
+        # A connector that pools a sequence itself needs to know which steps are
+        # real; one that receives a single vector has nothing to mask.
+        if getattr(self.connector, "wants_mask", False):
+            return self.connector(features, mask)  # (B, D_anchor)
         return self.connector(features)  # (B, D_anchor)
 
     def encode_text(self, texts: list[str]) -> torch.Tensor:

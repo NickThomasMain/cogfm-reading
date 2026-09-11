@@ -1,0 +1,8 @@
+# Connector that learns how to weight a sequence before projecting it. The
+# projection is the same two layers the mlp connector uses; what is added is the
+# pooling, which a mean would otherwise decide in advance.
+# in_dim/out_dim are wired at build time from the encoder and the anchor.
+name: attention_pool
+hidden_dim: 256
+dropout: 0.0
+score_dim: 128
