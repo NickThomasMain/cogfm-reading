@@ -1,0 +1,54 @@
+# Config for scripts/run_binding_eval.py on the EEG side, with the trial kept as
+# a sequence and the pooling learned instead of fixed.
+#
+# Differs from eval_eeg in exactly two places: the embedding file holds one
+# vector per one-second patch, and the connector pools that sequence itself.
+# Folds, pools, nulls, loss, anchor, step count and batch size are identical, so
+# the two rows can be read against each other.
+#
+# Needs the sequence file first:
+#   uv run python scripts/embed_zuco_eeg.py --pooling time
+#   uv run python scripts/run_binding_eval.py --config-name eval_eeg_seq
+#
+defaults:
+  - data: zuco_eeg_emb
+  - connector: attention_pool
+  - anchor: qwen3
+  - loss: infonce
+  - _self_
+
+seed: 42
+
+data:
+  embeddings: eeg_embeddings_all_average_egi62_time.npz
+
+conditions:
+  - name: noise
+    encoder: noise
+    embed_dim: 128
+  - name: labram
+    encoder: precomputed
+    embed_dim: 200
+    sequence: true          # keep the time axis; the connector pools it
+
+optimizer:
+  lr: 0.001
+  weight_decay: 0.0
+
+training:
+  max_steps: 1500
+  batch_size: 128
+  log_every: 250
+
+eval:
+  folds: []
+  pool_size: 25
+  tolerance: 3
+  pool_seed: 0
+  n_permutations: 1000
+  permutation_seed: 0
+  batch_size: 256
+  headline_metric: recall@1
+
+  within_subject_null: true
+  decoy_test: true

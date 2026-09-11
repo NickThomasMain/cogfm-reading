@@ -13,6 +13,11 @@ with the forward pass already done.
 The stored vector arrives as a length-one sequence, (B, 1, D), because batching
 and evaluation expect a sequence with a mask. There is nothing to pool over and
 nothing to mask, so the time axis is simply dropped.
+
+With ``sequence=True`` the stored trial is a real sequence -- one vector per
+one-second patch -- and the time axis is kept instead. Pooling then belongs to
+the connector, which is the point: a mean fixed here would decide in advance
+that every second of a trial counts the same.
 """
 
 from __future__ import annotations
@@ -31,21 +36,30 @@ class PrecomputedEncoder(ModalityEncoder):
         embed_dim: width of the stored vectors. Checked against every batch, so
             a config pointing at an embedding file of a different width fails
             immediately instead of training on a silently reshaped tensor.
+        sequence: keep the time axis and pass the sequence on, for stored files
+            that hold one vector per patch. The connector then does the pooling
+            and must accept a sequence. False expects one step per trial and
+            rejects anything longer, which catches a config paired with the
+            wrong embedding file instead of averaging it away unnoticed.
     """
 
-    def __init__(self, embed_dim: int) -> None:
+    def __init__(self, embed_dim: int, sequence: bool = False) -> None:
         super().__init__(embed_dim)
+        self.sequence = bool(sequence)
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor | None = None) -> torch.Tensor:
         if x.ndim != 3:
-            raise ValueError(f"expected (batch, 1, {self.embed_dim}), got {tuple(x.shape)}")
-        if x.shape[1] != 1:
-            raise ValueError(
-                f"a stored embedding is one step long, got {x.shape[1]}. A batch with more "
-                "than one step means the dataset is serving raw signal, not embeddings."
-            )
+            raise ValueError(f"expected (batch, steps, {self.embed_dim}), got {tuple(x.shape)}")
         if x.shape[2] != self.embed_dim:
             raise ValueError(
                 f"embed_dim {self.embed_dim} does not match the stored width {x.shape[2]}"
+            )
+        if self.sequence:
+            return x
+        if x.shape[1] != 1:
+            raise ValueError(
+                f"a stored mean is one step long, got {x.shape[1]}. Either the file holds "
+                "patch sequences, in which case set sequence=True, or the dataset is "
+                "serving raw signal rather than embeddings."
             )
         return x[:, 0, :]

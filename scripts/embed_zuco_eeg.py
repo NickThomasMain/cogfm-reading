@@ -24,9 +24,16 @@ NOT made here. ``--too-long skip`` (default) leaves them out and reports how
 many; ``--too-long crop`` keeps their first 16 seconds. Whichever is chosen ends
 up in the output file's metadata.
 
+``--pooling time`` writes something different: one vector per one-second patch
+instead of one per trial, so the trial stays a sequence and the pooling can be
+learned downstream instead of being fixed here. Averaging a five-second trial
+into a single vector cannot preserve anything that sits in one of its seconds,
+which is the reason to keep the option open.
+
 Read only apart from the output file. Run:
 
     uv run python scripts/embed_zuco_eeg.py
+    uv run python scripts/embed_zuco_eeg.py --pooling time
     uv run python scripts/embed_zuco_eeg.py --reference recording --too-long crop
 """
 
@@ -54,7 +61,7 @@ def main() -> None:
     parser.add_argument("--task", default=None, help="SR, NR, or both when omitted")
     parser.add_argument("--reference", default="average", choices=("average", "recording"))
     parser.add_argument("--channels", default="egi62", choices=("egi62", "named69", "all"))
-    parser.add_argument("--pooling", default="mean", choices=("mean", "cls"))
+    parser.add_argument("--pooling", default="mean", choices=("mean", "cls", "time"))
     parser.add_argument("--too-long", default="skip", choices=("skip", "crop"),
                         help="trials beyond the checkpoint's 16 patches")
     parser.add_argument("--batch-size", type=int, default=64)
@@ -87,7 +94,15 @@ def main() -> None:
     for index in np.flatnonzero(keep):
         groups[int(effective[index])].append(int(index))
 
+    # "time" pooling returns one vector per one-second patch, so a trial is a
+    # sequence rather than a point and the trials differ in length. They are
+    # collected per trial here and stored flat with offsets, which keeps the
+    # file free of padding: what the connector later masks is padding added
+    # inside a batch, never padding baked into the data.
+    sequence = args.pooling == "time"
+    pieces: dict[int, np.ndarray] = {}
     vectors = np.zeros((len(data), encoder.embed_dim), dtype=np.float32)
+
     done, started = 0, time.time()
     for n_patches in sorted(groups):
         indices = groups[n_patches]
@@ -97,12 +112,28 @@ def main() -> None:
             # Every trial in this batch has exactly n_patches -- no padding, no mask.
             batch = torch.stack([torch.from_numpy(data.eeg(i)[:cut]) for i in chunk])
             with torch.no_grad():
-                vectors[chunk] = encoder(batch).numpy()
+                encoded = encoder(batch).numpy()
+            if sequence:
+                for row, index in enumerate(chunk):
+                    pieces[index] = encoded[row]
+            else:
+                vectors[chunk] = encoded
             done += len(chunk)
         print(f"  {n_patches:2d} s : {len(indices):5d} trials   ({done}/{int(keep.sum())}, "
               f"{time.time() - started:.0f} s)")
 
-    if not np.isfinite(vectors[keep]).all():
+    order = np.flatnonzero(keep)
+    if sequence:
+        lengths = np.array([len(pieces[int(i)]) for i in order], dtype=np.int64)
+        payload = {
+            "tokens": np.concatenate([pieces[int(i)] for i in order], axis=0),
+            "offsets": np.concatenate([[0], np.cumsum(lengths)]).astype(np.int64),
+        }
+        finite = np.isfinite(payload["tokens"]).all()
+    else:
+        payload = {"vectors": vectors[keep]}
+        finite = np.isfinite(payload["vectors"]).all()
+    if not finite:
         raise SystemExit("non-finite vectors produced; refusing to write")
 
     out = Path(args.out) if args.out else Path(args.root) / (
@@ -111,7 +142,7 @@ def main() -> None:
     )
     np.savez(
         out,
-        vectors=vectors[keep],
+        **payload,
         subject=data.subject_ids[keep],
         task=data.task_ids[keep],
         sentence_id=data.sentence_ids[keep],
@@ -126,7 +157,8 @@ def main() -> None:
         sample_rate=np.array([200]),
     )
     size = out.stat().st_size / 1e6
-    print(f"\nwrote {out}  ({int(keep.sum())} vectors, {encoder.embed_dim} dims, {size:.1f} MB)")
+    shape = "sequences" if sequence else "vectors"
+    print(f"\nwrote {out}  ({int(keep.sum())} {shape}, {encoder.embed_dim} dims, {size:.1f} MB)")
     print(f"total {time.time() - started:.0f} s")
 
 

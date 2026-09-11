@@ -91,7 +91,10 @@ class LaBraMEncoder(ModalityEncoder):
         legacy_names: use T3/T4/T5/T6 instead of T7/T8/P7/P8.
         checkpoint: Hugging Face id passed to ``Labram.from_pretrained``.
         max_patches: refuse inputs longer than this many one-second patches.
-        pooling: ``"mean"`` over valid patch tokens, or ``"cls"``.
+        pooling: ``"mean"`` over valid patch tokens, ``"cls"``, or ``"time"``.
+            ``"time"`` averages the channel axis but keeps the time axis, so it
+            returns one vector per one-second patch, shape (batch, patches, dim),
+            and the caller decides how to pool. The other two return (batch, dim).
         layer: read the representation off this transformer block instead
             of the last one. The final block of a foundation model is often
             the most specialised to its pretraining objective, so an earlier
@@ -117,8 +120,8 @@ class LaBraMEncoder(ModalityEncoder):
         layer: int | None = None,
     ) -> None:
         super().__init__(embed_dim)
-        if pooling not in ("mean", "cls"):
-            raise ValueError(f"pooling must be 'mean' or 'cls', got {pooling!r}")
+        if pooling not in ("mean", "cls", "time"):
+            raise ValueError(f"pooling must be 'mean', 'cls' or 'time', got {pooling!r}")
 
         try:
             from braindecode.models import Labram
@@ -267,6 +270,14 @@ class LaBraMEncoder(ModalityEncoder):
 
         # tokens are (B, C * P, D), channel-major: all patches of channel 0 first.
         tokens = tokens.reshape(batch, n_channels, n_patches, -1)
+
+        if self.pooling == "time":
+            # Keep the time axis and average only over channels. Nothing is
+            # dropped here even under a mask: a caller asking for the sequence
+            # gets every patch and decides itself which ones count, which is
+            # what a trainable pooling layer downstream needs.
+            return tokens.mean(dim=1)
+
         weights = self._patch_weights(mask, batch, n_patches, x.device, tokens.dtype)
         weights = weights.view(batch, 1, n_patches, 1)
         total = (tokens * weights).sum(dim=(1, 2))
