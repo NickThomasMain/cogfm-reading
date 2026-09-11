@@ -1,0 +1,72 @@
+# Config for scripts/run_binding_eval.py on ZuCo's own band power features,
+# with the readers aligned into a shared space before the connector sees them.
+#
+# Differs from eval_eeg_bands in exactly one place: the `shared_space` block.
+# Everything else -- folds, pools, nulls, connector, loss, anchor -- is identical,
+# so a difference between the two rows can only come from the alignment.
+#
+# Why the alignment is there: without it the subject-disjoint row sits on chance
+# (recall@1 0.039 against 0.040) while the subject-sharing control reaches 0.088.
+# The whole loss of the chain sits on the reader axis. Five distribution-based
+# corrections failed to move it; correspondence between readers closes it.
+#
+# The space is refitted inside every fold and never sees that fold's held-out
+# readers or held-out sentences. The held-out reader gets a map of their own from
+# their recordings of the TRAINING sentences, which is unlabelled EEG and no text.
+# That narrows the claim to "a new reader needs a short calibration", and the
+# write-up has to say so.
+#
+#   uv run python scripts/run_binding_eval.py --config-name eval_eeg_bands_mcca
+#
+defaults:
+  - data: zuco_eeg_emb
+  - connector: mlp
+  - anchor: qwen3
+  - loss: infonce
+  - _self_
+
+seed: 42
+
+data:
+  embeddings: eeg_bands_TRT_sentence.npz
+
+# Width 25 was the smallest setting that reached the plateau in the measurement
+# script; 50 scored the same. The grid has to reach low, because on synthetic
+# data at a poor signal-to-noise ratio a width of 50 scored below predicting the
+# mean while 10 recovered the truth. That is de Cheveigne's warning about MCCA
+# finding agreement in shared noise, and it shows up as a number.
+shared_space:
+  components: 25
+  view_pcs: 60
+  ridge: 100.0
+  iterations: 5
+
+conditions:
+  - name: noise
+    encoder: noise
+    embed_dim: 128
+  - name: bands
+    encoder: precomputed
+    embed_dim: 840          # 8 bands x 105 channels; the shared space replaces this
+
+optimizer:
+  lr: 0.001
+  weight_decay: 0.0
+
+training:
+  max_steps: 1500
+  batch_size: 128
+  log_every: 250
+
+eval:
+  folds: []
+  pool_size: 25
+  tolerance: 3
+  pool_seed: 0
+  n_permutations: 1000
+  permutation_seed: 0
+  batch_size: 256
+  headline_metric: recall@1
+
+  within_subject_null: true
+  decoy_test: true

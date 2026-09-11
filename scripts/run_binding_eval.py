@@ -39,6 +39,7 @@ import cogfm.losses  # noqa: F401
 from cogfm.binding.model import BindingModel
 from cogfm.data.adapters.zuco_eeg_embeddings import ZuCoEEGEmbeddingDataset
 from cogfm.data.adapters.zuco_et import ZuCoETDataset
+from cogfm.data.shared_space import project_dataset
 from cogfm.data.splits import make_folds
 from cogfm.eval.pools import build_decoy_pools
 from cogfm.eval.report import aggregate, format_gaps, format_result_row
@@ -88,12 +89,27 @@ def build_anchor(cfg: DictConfig):
     return anchor
 
 
-def build_model(cfg: DictConfig, encoder_name: str, encoder_dim: int, anchor) -> BindingModel:
-    """Assemble the two towers with one condition's encoder in place."""
-    encoder = ENCODERS.build(encoder_name, embed_dim=encoder_dim)
+def build_model(cfg: DictConfig, condition, anchor, embed_dim: int | None = None) -> BindingModel:
+    """Assemble the two towers with one condition's encoder in place.
+
+    Keys a condition carries beyond name, encoder and embed_dim are handed to
+    the encoder, so a condition can bring its own settings without needing a
+    config group to itself.
+    """
+    reserved = ("name", "encoder", "embed_dim")
+    encoder_params = {k: v for k, v in condition.items() if k not in reserved}
+    # A shared space changes the width of what arrives, and the connector has to
+    # be built for what it actually receives rather than for what the condition
+    # declared. Passing the measured width beats trusting the config here,
+    # because a mismatch would only surface as a shape error deep in training.
+    width = int(condition.embed_dim if embed_dim is None else embed_dim)
+    encoder = ENCODERS.build(condition.encoder, embed_dim=width, **encoder_params)
     connector_params = {k: v for k, v in cfg.connector.items() if k != "name"}
     connector = CONNECTORS.build(
-        cfg.connector.name, in_dim=encoder_dim, out_dim=cfg.anchor.dim, **connector_params
+        cfg.connector.name,
+        in_dim=width,
+        out_dim=cfg.anchor.dim,
+        **connector_params,
     )
     return BindingModel(encoder, connector, anchor)
 
@@ -113,6 +129,15 @@ def main(cfg: DictConfig) -> None:
 
     anchor = build_anchor(cfg)
 
+    # The shared space is optional and off unless a config asks for it, so every
+    # existing row keeps its meaning. Where it is on, it is refitted inside every
+    # fold: fitting it once for the corpus would let it see the readers and the
+    # sentences it is about to be scored on, which is the one leak this whole
+    # protocol exists to prevent.
+    space_cfg = OmegaConf.to_container(cfg.shared_space) if cfg.get("shared_space") else None
+    if space_cfg:
+        log.info("Gemeinsamer Raum je Fold: %s", space_cfg)
+
     summaries = []
     within_subject: dict[str, list] = {}
     decoys: dict[str, list] = {}
@@ -122,7 +147,18 @@ def main(cfg: DictConfig) -> None:
             fold = folds[index]
             set_seed(cfg.seed + index)
 
-            model = build_model(cfg, condition.encoder, condition.embed_dim, anchor)
+            # Only the conditions that actually read the stored vectors are
+            # projected. The noise condition draws its own numbers and would be
+            # measuring the projection of nothing.
+            data_for_fold = dataset
+            width = None
+            if space_cfg and condition.encoder == "precomputed":
+                data_for_fold = project_dataset(dataset, fold, **space_cfg)
+                width = data_for_fold.embed_dim
+                log.info("[%s] Fold %d: gemeinsamer Raum, %d -> %d Dimensionen",
+                         condition.name, index, dataset.embed_dim, width)
+
+            model = build_model(cfg, condition, anchor, embed_dim=width)
             model.encoder.requires_grad_(False)
             optimizer = torch.optim.Adam(
                 model.connector.parameters(),
@@ -133,7 +169,7 @@ def main(cfg: DictConfig) -> None:
                 model,
                 LOSSES.build(cfg.loss.name, temperature=cfg.loss.temperature),
                 optimizer,
-                Subset(dataset, fold.train.tolist()),
+                Subset(data_for_fold, fold.train.tolist()),
                 max_steps=cfg.training.max_steps,
                 batch_size=cfg.training.batch_size,
                 seed=cfg.seed + index,
@@ -143,7 +179,7 @@ def main(cfg: DictConfig) -> None:
 
             similarity, order, query_sentences = embed_fold(
                 model,
-                dataset,
+                data_for_fold,
                 fold.test.tolist(),
                 fold.test_sentences,
                 batch_size=cfg.eval.batch_size,
